@@ -71,6 +71,12 @@ body {
     background: linear-gradient(to bottom, #0a2342 0%, #000000 100%);
 }
 
+body.workout-page {
+    align-items: flex-start;
+    padding-top: 40px;
+    box-sizing: border-box;
+}
+
 .center-content {
     display: flex;
     flex-direction: column;
