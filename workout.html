@@ -7,17 +7,60 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="weather-widget">
-        <a class="weatherwidget-io" href="https://forecast7.com/en/44d98n93d27/minneapolis/?unit=us" data-label_1="MINNEAPOLIS" data-label_2="WEATHER" data-theme="original" data-basecolor="#a6a6a6" data-textcolor="#2c2e32" data-highcolor="#873131" data-lowcolor="#274673" data-suncolor="#feb30e" data-mooncolor="#9f9380" data-cloudcolor="#ffffff" data-snowcolor="#ffffff">MINNEAPOLIS WEATHER</a>
-        <script>
-        !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
-        </script>
-    </div>
     <div class="center-content">
         <div class="rounded-bg">
             <h1>Workout</h1>
             <p class="workout-subtitle">Let's get to work.</p>
+            <div id="workout-recommendation">
+                <p id="workout-text">Checking weather...</p>
+            </div>
         </div>
     </div>
+
+    <script>
+        const API_KEY = 'PASTE_YOUR_API_KEY_HERE'; // Replace with your OpenWeatherMap API key
+        const CITY = 'Minneapolis';
+
+        async function getWorkoutRecommendation() {
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${API_KEY}&units=imperial`
+                );
+                const data = await response.json();
+
+                const temp = data.main.temp;
+                const weatherCondition = data.weather[0].main.toLowerCase();
+
+                let recommendation = '';
+                let isIndoor = false;
+
+                if (weatherCondition.includes('rain') ||
+                    weatherCondition.includes('snow') ||
+                    weatherCondition.includes('drizzle')) {
+                    recommendation = '🏠 Good day for indoor workout';
+                    isIndoor = true;
+                } else if (temp < 50 || temp > 90) {
+                    recommendation = '🏠 Good day for indoor workout';
+                    isIndoor = true;
+                } else {
+                    recommendation = '🌤️ Good day for outdoor workout';
+                    isIndoor = false;
+                }
+
+                const workoutText = document.getElementById('workout-text');
+                workoutText.textContent = recommendation;
+
+                const container = document.getElementById('workout-recommendation');
+                container.className = isIndoor ? 'indoor' : 'outdoor';
+
+            } catch (error) {
+                console.error('Error fetching weather:', error);
+                document.getElementById('workout-text').textContent = 'Unable to load recommendation';
+            }
+        }
+
+        getWorkoutRecommendation();
+        setInterval(getWorkoutRecommendation, 30 * 60 * 1000);
+    </script>
 </body>
 </html>

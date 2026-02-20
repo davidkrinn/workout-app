@@ -13,20 +13,40 @@
     transition: background 0.2s, box-shadow 0.2s;
     margin-top: 30px;
 }
-.weather-widget {
-    width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
-}
-
 .workout-subtitle {
     color: #fff;
     font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 1.2rem;
     margin-top: 12px;
     opacity: 0.8;
+}
+
+#workout-recommendation {
+    max-width: 300px;
+    margin: 15px auto 0;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+#workout-recommendation.outdoor {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1a5f3f;
+    border: 2px solid #5cb85c;
+}
+
+#workout-recommendation.indoor {
+    background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+    color: #4a4a4a;
+    border: 2px solid #d9534f;
+}
+
+#workout-text {
+    margin: 0;
+    font-size: 16px;
 }
 
 .start-btn:hover {
