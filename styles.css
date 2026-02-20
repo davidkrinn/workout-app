@@ -1,3 +1,47 @@
+
+
+.start-btn {
+    background: #b8860b;
+    color: #fff;
+    font-size: 1.3rem;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 16px 40px;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    margin-top: 30px;
+}
+.weather-widget {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+}
+
+.workout-subtitle {
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 1.2rem;
+    margin-top: 12px;
+    opacity: 0.8;
+}
+
+.start-btn:hover {
+    background: #a0760a;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
+.rounded-bg {
+    background: rgba(255,255,255,0.05);
+    border-radius: 24px;
+    padding: 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 body {
     min-height: 100vh;
     margin: 0;
@@ -7,10 +51,29 @@ body {
     background: linear-gradient(to bottom, #0a2342 0%, #000000 100%);
 }
 
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
 h1 {
     color: #fff;
     font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 3rem;
     letter-spacing: 0.1em;
     text-shadow: 0 2px 16px rgba(0,0,0,0.5);
+    margin: 0;
+}
+
+.kettlebell-img {
+    display: block;
+    margin-top: 60px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 120px;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));
 }
