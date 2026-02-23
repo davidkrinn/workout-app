@@ -108,14 +108,15 @@ body.workout-page {
 .col-11 { grid-column: span 11; }
 .col-12 { grid-column: span 12; }
 
-/* Tablet: ≤960px — side-by-side panels stack */
+/* Tablet: ≤960px — panels stack full width */
 @media (max-width: 960px) {
-    .col-6 { grid-column: span 12; }
-    .col-4 { grid-column: span 12; }
-    .col-8 { grid-column: span 12; }
+    .tracker-container,
+    .detail-panel {
+        grid-column: span 12 !important;
+    }
 }
 
-/* Mobile: ≤640px — everything full width */
+/* Mobile: ≤640px — full width, tighter padding */
 @media (max-width: 640px) {
     .grid > [class*='col-'] { grid-column: span 12; }
     .page-wrapper { padding: 0 12px; }
