@@ -47,7 +47,7 @@
         .exercise-row:last-child { border-bottom: none; }
         .exercise-row strong { color: #333; font-size: 15px; min-width: 140px; }
         .exercise-row span { color: #666; font-size: 14px; }
-        .card-actions { display: flex; gap: 10px; margin-top: 14px; }
+        .card-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
         .btn-edit {
             background: #667eea;
             color: white;
@@ -60,6 +60,18 @@
             transition: background 0.2s;
         }
         .btn-edit:hover { background: #5568d3; }
+        .btn-start {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
+            transition: background 0.2s;
+        }
+        .btn-start:hover { background: #218838; }
         .btn-danger {
             background: #dc3545;
             color: white;
@@ -72,6 +84,58 @@
             transition: background 0.2s;
         }
         .btn-danger:hover { background: #c82333; }
+        .active-workout-panel {
+            display: none;
+            margin-top: 18px;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 18px;
+        }
+        .active-exercise { margin-bottom: 20px; }
+        .active-exercise-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .active-set-headers {
+            display: grid;
+            grid-template-columns: 60px 80px 1fr;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .active-set-headers span {
+            font-size: 11px;
+            font-weight: 700;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+        .workout-set-row {
+            display: grid;
+            grid-template-columns: 60px 80px 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .workout-set-row .set-label { font-weight: 600; color: #555; font-size: 14px; }
+        .workout-set-row .reps-label {
+            background: #f0f0f0;
+            border-radius: 6px;
+            padding: 7px 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+        .workout-set-row input {
+            padding: 7px 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
+        }
+        .workout-set-row input:focus { border-color: #667eea; outline: none; }
         .no-workouts { text-align: center; color: #999; padding: 40px; }
         @media (max-width: 960px) {
             .saved-workouts-container { grid-column: span 12 !important; }
@@ -133,6 +197,28 @@
             }
         }
 
+        function renderActivePanel(workout) {
+            return workout.exercises.map(exercise => {
+                const numSets = Math.max(1, exercise.sets[0]?.reps ?? 1);
+                const numReps = exercise.sets[0]?.weight ?? 0;
+                let rows = '';
+                for (let i = 1; i <= numSets; i++) {
+                    rows += `
+                        <div class="workout-set-row">
+                            <span class="set-label">Set ${i}</span>
+                            <span class="reps-label">${numReps} reps</span>
+                            <input type="number" min="0" placeholder="lbs">
+                        </div>`;
+                }
+                return `
+                    <div class="active-exercise">
+                        <div class="active-exercise-name">${exercise.name}</div>
+                        <div class="active-set-headers"><span>Set</span><span>Reps</span><span>Weight (lbs)</span></div>
+                        ${rows}
+                    </div>`;
+            }).join('');
+        }
+
         function displayWorkoutHistory() {
             const container = document.getElementById('workoutHistory');
             if (workoutHistory.length === 0) {
@@ -151,11 +237,23 @@
                         `).join('')}
                     </div>
                     <div class="card-actions">
+                        <button class="btn-start" onclick="toggleStartWorkout(${workout.id}, this)">Start Workout</button>
                         <button class="btn-edit" onclick="editWorkout(${workout.id})">Edit Workout</button>
                         <button class="btn-danger" onclick="deleteWorkout(${workout.id})">Delete Workout</button>
                     </div>
+                    <div class="active-workout-panel" id="awp-${workout.id}">
+                        ${renderActivePanel(workout)}
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function toggleStartWorkout(workoutId, btn) {
+            const panel = document.getElementById(`awp-${workoutId}`);
+            const isOpen = panel.style.display === 'block';
+            panel.style.display = isOpen ? 'none' : 'block';
+            btn.textContent = isOpen ? 'Start Workout' : 'End Workout';
+            btn.style.background = isOpen ? '' : '#dc3545';
         }
 
         function editWorkout(workoutId) {
