@@ -429,12 +429,27 @@
     <script>
         let exercises = [];
         let workoutHistory = [];
+        let editingWorkoutId = null;
 
         function loadWorkouts() {
             const saved = localStorage.getItem('workoutHistory');
             if (saved) {
                 workoutHistory = JSON.parse(saved);
                 displayWorkoutHistory();
+            }
+            const params = new URLSearchParams(window.location.search);
+            const editId = params.get('edit');
+            if (editId) {
+                const workout = workoutHistory.find(w => w.id == editId);
+                if (workout) {
+                    editingWorkoutId = workout.id;
+                    document.getElementById('workoutType').value = workout.type;
+                    exercises = JSON.parse(JSON.stringify(workout.exercises));
+                    displayExercises();
+                    const saveBtn = document.querySelector('button[onclick="saveWorkout()"]');
+                    if (saveBtn) saveBtn.textContent = 'Update Workout';
+                    document.querySelector('.tracker-container h1').textContent = 'Edit Workout';
+                }
             }
         }
 
@@ -576,15 +591,21 @@
             const workoutType = document.getElementById('workoutType').value;
             if (!workoutType) { alert('Please enter a workout name'); return; }
             if (exercises.length === 0) { alert('Please add at least one exercise'); return; }
-            if (exercises.some(e => e.sets.every(s => !s.reps && !s.weight))) {
-                alert('Please fill in reps or weight for each exercise'); return;
+            if (editingWorkoutId !== null) {
+                const idx = workoutHistory.findIndex(w => w.id === editingWorkoutId);
+                if (idx !== -1) workoutHistory[idx] = { id: editingWorkoutId, type: workoutType, exercises: JSON.parse(JSON.stringify(exercises)) };
+                editingWorkoutId = null;
+            } else {
+                workoutHistory.unshift({ id: Date.now(), type: workoutType, exercises: JSON.parse(JSON.stringify(exercises)) });
             }
-            workoutHistory.unshift({ id: Date.now(), type: workoutType, exercises: JSON.parse(JSON.stringify(exercises)) });
             localStorage.setItem('workoutHistory', JSON.stringify(workoutHistory));
             exercises = [];
             displayExercises();
             document.getElementById('workoutType').value = '';
             displayWorkoutHistory();
+            document.querySelector('.tracker-container h1').textContent = 'Workout Builder';
+            const saveBtn = document.querySelector('button[onclick="saveWorkout()"]');
+            if (saveBtn) saveBtn.textContent = 'Save Workout';
             alert('Workout saved successfully!');
         }
 

@@ -29,28 +29,37 @@
             margin-bottom: 15px;
             border-radius: 10px;
             border-left: 5px solid #667eea;
-            cursor: pointer;
-            transition: box-shadow 0.2s, border-color 0.2s;
         }
-        .workout-card:hover {
-            box-shadow: 0 4px 16px rgba(102,126,234,0.2);
-            border-left-color: #5568d3;
+        .workout-card-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 14px;
         }
-        .workout-card.active {
-            border-left-color: #28a745;
-            box-shadow: 0 4px 16px rgba(40,167,69,0.2);
+        .exercise-list { margin-bottom: 14px; }
+        .exercise-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e8e8e8;
         }
-        .workout-type {
-            display: inline-block;
-            background: #e7f3ff;
-            color: #0066cc;
-            padding: 5px 15px;
-            border-radius: 20px;
+        .exercise-row:last-child { border-bottom: none; }
+        .exercise-row strong { color: #333; font-size: 15px; min-width: 140px; }
+        .exercise-row span { color: #666; font-size: 14px; }
+        .card-actions { display: flex; gap: 10px; margin-top: 14px; }
+        .btn-edit {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
             font-size: 14px;
-            margin-bottom: 10px;
+            cursor: pointer;
+            font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
+            transition: background 0.2s;
         }
-        .exercise-summary { margin-top: 10px; padding-left: 15px; }
-        .no-workouts { text-align: center; color: #999; padding: 40px; }
+        .btn-edit:hover { background: #5568d3; }
         .btn-danger {
             background: #dc3545;
             color: white;
@@ -59,94 +68,13 @@
             padding: 8px 20px;
             font-size: 14px;
             cursor: pointer;
-            margin-top: 15px;
             font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
             transition: background 0.2s;
         }
         .btn-danger:hover { background: #c82333; }
-
-        /* Detail panel */
-        .main-layout {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 24px;
-            align-items: start;
-            width: 100%;
-        }
-        .main-layout.has-detail .saved-workouts-container {
-            grid-column: span 6;
-        }
-        .detail-panel {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            display: none;
-            font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
-            grid-column: span 6;
-        }
-        .detail-panel h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-        }
-        .detail-exercise { margin-bottom: 24px; }
-        .detail-exercise h3 {
-            color: #667eea;
-            font-size: 17px;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 6px;
-        }
-        .detail-col-headers {
-            display: grid;
-            grid-template-columns: 70px 80px 1fr;
-            gap: 12px;
-            margin-bottom: 6px;
-        }
-        .detail-col-headers span {
-            font-size: 12px;
-            font-weight: 700;
-            color: #999;
-            text-transform: uppercase;
-        }
-        .detail-set-row {
-            display: grid;
-            grid-template-columns: 70px 80px 1fr;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .detail-set-row span {
-            font-weight: 600;
-            color: #555;
-            font-size: 14px;
-        }
-        .detail-set-row .reps-display {
-            background: #f0f0f0;
-            border-radius: 6px;
-            padding: 8px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        .detail-set-row input {
-            padding: 8px 10px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 15px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .detail-set-row input:focus {
-            border-color: #667eea;
-            outline: none;
-        }
+        .no-workouts { text-align: center; color: #999; padding: 40px; }
         @media (max-width: 960px) {
-            .saved-workouts-container,
-            .detail-panel {
-                grid-column: span 12 !important;
-            }
+            .saved-workouts-container { grid-column: span 12 !important; }
         }
     </style>
 </head>
@@ -180,16 +108,12 @@
     </script>
 
     <div class="page-wrapper">
-        <div class="main-layout" id="mainLayout">
+        <div class="grid">
             <div class="saved-workouts-container">
                 <h1>Saved Workouts</h1>
                 <div id="workoutHistory">
                     <div class="no-workouts">No workouts recorded yet. Start tracking!</div>
                 </div>
-            </div>
-            <div class="detail-panel" id="detailPanel">
-                <h2 id="detailTitle">Workout Details</h2>
-                <div id="detailContent"></div>
             </div>
         </div>
     </div>
@@ -199,13 +123,14 @@
 
         function loadWorkouts() {
             const saved = localStorage.getItem('workoutHistory');
-            if (saved) {
-                workoutHistory = JSON.parse(saved);
-            }
+            if (saved) workoutHistory = JSON.parse(saved);
             displayWorkoutHistory();
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id');
-            if (id) viewWorkout(parseInt(id));
+            if (id) {
+                const card = document.querySelector(`.workout-card[data-workout-id="${id}"]`);
+                if (card) { card.style.borderLeftColor = '#28a745'; card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            }
         }
 
         function displayWorkoutHistory() {
@@ -215,64 +140,32 @@
                 return;
             }
             container.innerHTML = workoutHistory.map(workout => `
-                <div class="workout-card" data-workout-id="${workout.id}" onclick="viewWorkout(${workout.id})">
-                    <span class="workout-type">${workout.type}</span>
-                    <div class="exercise-summary">
+                <div class="workout-card" data-workout-id="${workout.id}">
+                    <div class="workout-card-name">${workout.type}</div>
+                    <div class="exercise-list">
                         ${workout.exercises.map(exercise => `
-                            <div style="margin-bottom: 8px;">
-                                <strong>${exercise.name}</strong>: ${exercise.sets.length} set${exercise.sets.length > 1 ? 's' : ''}
+                            <div class="exercise-row">
+                                <strong>${exercise.name}</strong>
+                                <span>Sets: ${exercise.sets[0]?.reps ?? 0} &nbsp;&middot;&nbsp; Reps: ${exercise.sets[0]?.weight ?? 0}</span>
                             </div>
                         `).join('')}
                     </div>
-                    <button class="btn-danger" onclick="event.stopPropagation(); deleteWorkout(${workout.id})">Delete Workout</button>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick="editWorkout(${workout.id})">Edit Workout</button>
+                        <button class="btn-danger" onclick="deleteWorkout(${workout.id})">Delete Workout</button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function viewWorkout(workoutId) {
-            const workout = workoutHistory.find(w => w.id === workoutId);
-            if (!workout) return;
-
-            document.querySelectorAll('.workout-card').forEach(c => c.classList.remove('active'));
-            const activeCard = document.querySelector(`.workout-card[data-workout-id="${workoutId}"]`);
-            if (activeCard) activeCard.classList.add('active');
-
-            document.getElementById('detailTitle').textContent = workout.type;
-
-            const content = document.getElementById('detailContent');
-            content.innerHTML = workout.exercises.map(exercise => `
-                <div class="detail-exercise">
-                    <h3>${exercise.name}</h3>
-                    <div class="detail-col-headers">
-                        <span>Set</span>
-                        <span>Reps</span>
-                        <span>Weight (lbs)</span>
-                    </div>
-                    ${exercise.sets.map((set, i) => `
-                        <div class="detail-set-row">
-                            <span>Set ${i + 1}</span>
-                            <div class="reps-display">${set.weight || 0}</div>
-                            <input type="number" min="0" placeholder="Weight (lbs)" value="">
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('');
-
-            const panel = document.getElementById('detailPanel');
-            panel.style.display = 'block';
-            panel.dataset.activeId = workoutId;
-            document.getElementById('mainLayout').classList.add('has-detail');
+        function editWorkout(workoutId) {
+            window.location.href = `workout-builder.html?edit=${workoutId}`;
         }
 
         function deleteWorkout(workoutId) {
             if (confirm('Are you sure you want to delete this workout?')) {
                 workoutHistory = workoutHistory.filter(w => w.id !== workoutId);
                 localStorage.setItem('workoutHistory', JSON.stringify(workoutHistory));
-                const panel = document.getElementById('detailPanel');
-                if (panel.dataset.activeId == workoutId) {
-                    panel.style.display = 'none';
-                    document.getElementById('mainLayout').classList.remove('has-detail');
-                }
                 displayWorkoutHistory();
             }
         }
