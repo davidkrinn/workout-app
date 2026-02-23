@@ -340,6 +340,24 @@
                 <label for="customExerciseName">Custom Exercise Name</label>
                 <input type="text" id="customExerciseName" placeholder="Enter exercise name">
             </div>
+            <div style="display:flex; gap:24px; margin-bottom:10px;">
+                <div class="field-row">
+                    <label class="form-group" style="display:block;margin-bottom:5px;color:#555;font-weight:600;">Sets</label>
+                    <div class="stepper">
+                        <button class="stepper-btn" type="button" onclick="stepFormField('formSets', -1)">−</button>
+                        <input type="number" id="formSets" min="0" value="0" style="width:80px;text-align:center;padding:8px;">
+                        <button class="stepper-btn" type="button" onclick="stepFormField('formSets', 1)">+</button>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <label class="form-group" style="display:block;margin-bottom:5px;color:#555;font-weight:600;">Reps</label>
+                    <div class="stepper">
+                        <button class="stepper-btn" type="button" onclick="stepFormField('formReps', -1)">−</button>
+                        <input type="number" id="formReps" min="0" value="0" style="width:80px;text-align:center;padding:8px;">
+                        <button class="stepper-btn" type="button" onclick="stepFormField('formReps', 1)">+</button>
+                    </div>
+                </div>
+            </div>
             <button onclick="addExercise()">Add Exercise</button>
         </div>
 
@@ -427,6 +445,11 @@
             customGroup.style.display = this.value === 'Custom' ? 'block' : 'none';
         });
 
+        function stepFormField(id, delta) {
+            const el = document.getElementById(id);
+            el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+        }
+
         function addExercise() {
             const exerciseSelect = document.getElementById('exerciseName');
             let exerciseName = exerciseSelect.value;
@@ -435,48 +458,86 @@
                 if (!exerciseName) { alert('Please enter a custom exercise name'); return; }
             }
             if (!exerciseName) { alert('Please select an exercise'); return; }
-            exercises.push({ id: Date.now(), name: exerciseName, sets: [{ reps: 0, weight: 0 }] });
+            const sets = parseInt(document.getElementById('formSets').value) || 0;
+            const reps = parseInt(document.getElementById('formReps').value) || 0;
+            exercises.push({ id: Date.now(), name: exerciseName, sets: [{ reps: sets, weight: reps }] });
             displayExercises();
             exerciseSelect.value = '';
             document.getElementById('customExerciseName').value = '';
             document.getElementById('customExerciseGroup').style.display = 'none';
+            document.getElementById('formSets').value = 0;
+            document.getElementById('formReps').value = 0;
         }
 
         function displayExercises() {
             const container = document.getElementById('exercisesList');
             if (exercises.length === 0) { container.innerHTML = ''; return; }
-            container.innerHTML = exercises.map(exercise => `
+            const exerciseOptions = `
+                <option value="">Select exercise...</option>
+                <optgroup label="Upper Body">
+                    <option value="Bench Press">Bench Press</option>
+                    <option value="Push-ups">Push-ups</option>
+                    <option value="Pull-ups">Pull-ups</option>
+                    <option value="Shoulder Press">Shoulder Press</option>
+                    <option value="Bicep Curls">Bicep Curls</option>
+                    <option value="Tricep Dips">Tricep Dips</option>
+                </optgroup>
+                <optgroup label="Lower Body">
+                    <option value="Squats">Squats</option>
+                    <option value="Lunges">Lunges</option>
+                    <option value="Deadlifts">Deadlifts</option>
+                    <option value="Leg Press">Leg Press</option>
+                    <option value="Calf Raises">Calf Raises</option>
+                </optgroup>
+                <optgroup label="Core">
+                    <option value="Plank">Plank</option>
+                    <option value="Crunches">Crunches</option>
+                    <option value="Russian Twists">Russian Twists</option>
+                    <option value="Leg Raises">Leg Raises</option>
+                </optgroup>
+                <optgroup label="Cardio">
+                    <option value="Running">Running</option>
+                    <option value="Cycling">Cycling</option>
+                    <option value="Jump Rope">Jump Rope</option>
+                    <option value="Burpees">Burpees</option>
+                </optgroup>
+                <option value="Custom">Custom Exercise...</option>
+            `;
+            container.innerHTML = exercises.map(exercise => {
+                const set = exercise.sets[0];
+                return `
                 <div class="exercise-item">
                     <div class="exercise-header">
-                        <h3>${exercise.name}</h3>
+                        <select style="font-family:inherit;font-size:15px;font-weight:600;color:#333;border:none;background:transparent;padding:0;width:auto;cursor:pointer;" onchange="updateExerciseName(${exercise.id}, this.value)">
+                            ${exerciseOptions.replace(`value="${exercise.name}"`, `value="${exercise.name}" selected`)}
+                        </select>
                         <button class="remove-btn" onclick="removeExercise(${exercise.id})">×</button>
-                    </div>                    ${exercise.sets.map((set, index) => `
-                        <div class="set-row">
-                            <div class="field-row">
-                                <label>Sets</label>
-                                <div class="stepper">
-                                    <button class="stepper-btn" onclick="stepField(${exercise.id}, ${index}, 'reps', -1)">−</button>
-                                    <input type="number" min="0" value="${set.reps || 0}" onchange="updateSet(${exercise.id}, ${index}, 'reps', this.value)">
-                                    <button class="stepper-btn" onclick="stepField(${exercise.id}, ${index}, 'reps', 1)">+</button>
-                                </div>
-                            </div>
-                            <div class="field-row">
-                                <label>Reps</label>
-                                <div class="stepper">
-                                    <button class="stepper-btn" onclick="stepField(${exercise.id}, ${index}, 'weight', -1)">−</button>
-                                    <input type="number" min="0" value="${set.weight || 0}" onchange="updateSet(${exercise.id}, ${index}, 'weight', this.value)">
-                                    <button class="stepper-btn" onclick="stepField(${exercise.id}, ${index}, 'weight', 1)">+</button>
-                                </div>
-                            </div>
-                            ${exercise.sets.length > 1 ? `<div class="set-remove-row"><button class="remove-btn" onclick="removeSet(${exercise.id}, ${index})">×</button></div>` : ''}
-                        </div>
-                    `).join('')}
-                    <div class="set-btn-row">
-                        <button class="add-set-btn" onclick="addSet(${exercise.id})">+ Add new set</button>
-                        <button class="copy-set-btn" onclick="copySet(${exercise.id})">Copy set</button>
                     </div>
-                </div>
-            `).join('');
+                    <div style="display:flex;gap:24px;margin-top:10px;">
+                        <div class="field-row">
+                            <label>Sets</label>
+                            <div class="stepper">
+                                <button class="stepper-btn" onclick="stepField(${exercise.id}, 0, 'reps', -1)">−</button>
+                                <input type="number" min="0" value="${set.reps || 0}" onchange="updateSet(${exercise.id}, 0, 'reps', this.value)" style="width:80px;text-align:center;padding:8px;">
+                                <button class="stepper-btn" onclick="stepField(${exercise.id}, 0, 'reps', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <label>Reps</label>
+                            <div class="stepper">
+                                <button class="stepper-btn" onclick="stepField(${exercise.id}, 0, 'weight', -1)">−</button>
+                                <input type="number" min="0" value="${set.weight || 0}" onchange="updateSet(${exercise.id}, 0, 'weight', this.value)" style="width:80px;text-align:center;padding:8px;">
+                                <button class="stepper-btn" onclick="stepField(${exercise.id}, 0, 'weight', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateExerciseName(exerciseId, newName) {
+            const exercise = exercises.find(e => e.id === exerciseId);
+            if (exercise) exercise.name = newName;
         }
 
         function stepField(exerciseId, setIndex, field, delta) {
