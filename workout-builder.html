@@ -250,6 +250,33 @@
     </style>
 </head>
 <body class="workout-page">
+    <nav class="site-nav">
+        <a class="nav-brand" href="index.html">
+            <img src="kettlebell.png" alt="Many Rounds">
+            <span>Many Rounds</span>
+        </a>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav-drawer" id="navDrawer">
+        <a href="index.html">Home</a>
+        <a href="workout-builder.html">Build New Workout</a>
+        <a href="workout-builder.html#saved">Saved Workouts</a>
+    </nav>
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const drawer = document.getElementById('navDrawer');
+        const overlay = document.getElementById('navOverlay');
+        function toggleNav() {
+            hamburger.classList.toggle('open');
+            drawer.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+        hamburger.addEventListener('click', toggleNav);
+        overlay.addEventListener('click', toggleNav);
+    </script>
     <div class="page-wrapper">
     <div class="center-content">
         <div class="rounded-bg">
@@ -322,7 +349,7 @@
             Save Workout
         </button>
 
-        <div class="section" style="margin-top: 30px;">
+        <div class="section" id="saved" style="margin-top: 30px;">
             <h2>Saved Workouts</h2>
             <div id="workoutHistory">
                 <div class="no-workouts">No workouts recorded yet. Start tracking!</div>
