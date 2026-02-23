@@ -301,7 +301,7 @@
         <div class="section">
             <h2>Add Exercise</h2>
             <div class="form-group">
-                <label for="exerciseName">Exercise Name</label>
+                <label for="exerciseName">Exercise Type</label>
                 <select id="exerciseName">
                     <option value="">Select exercise...</option>
                     <optgroup label="Upper Body">
@@ -595,19 +595,12 @@
                 return;
             }
             container.innerHTML = workoutHistory.map(workout => `
-                <div class="workout-card" data-workout-id="${workout.id}" onclick="viewWorkout(${workout.id})">
+                <div class="workout-card" data-workout-id="${workout.id}">
                     <span class="workout-type">${workout.type}</span>
-                    <div class="exercise-summary">
-                        ${workout.exercises.map(exercise => `
-                            <div style="margin-bottom: 10px;">
-                                <strong>${exercise.name}</strong>: ${exercise.sets.length} set${exercise.sets.length > 1 ? 's' : ''}
-                                <div style="color: #666; font-size: 14px; margin-top: 5px;">
-                                    ${exercise.sets.map((set, i) => `Set ${i + 1}: ${set.reps || 0} sets @ ${set.weight || 0} reps`).join(' • ')}
-                                </div>
-                            </div>
-                        `).join('')}
+                    <div style="display:flex;gap:10px;margin-top:12px;">
+                        <button onclick="viewWorkout(${workout.id})" style="width:auto;padding:8px 20px;">View Workout</button>
+                        <button class="btn-danger" onclick="deleteWorkout(${workout.id})" style="width:auto;padding:8px 20px;">Delete Workout</button>
                     </div>
-                    <button class="btn-danger" onclick="event.stopPropagation(); deleteWorkout(${workout.id})" style="margin-top: 15px; width: auto; padding: 8px 20px;">Delete Workout</button>
                 </div>
             `).join('');
         }
@@ -626,39 +619,7 @@
         }
 
         function viewWorkout(workoutId) {
-            const workout = workoutHistory.find(w => w.id === workoutId);
-            if (!workout) return;
-
-            // Mark active card
-            document.querySelectorAll('.workout-card').forEach(c => c.classList.remove('active'));
-            const activeCard = document.querySelector(`.workout-card[data-workout-id="${workoutId}"]`);
-            if (activeCard) activeCard.classList.add('active');
-
-            document.getElementById('detailTitle').textContent = workout.type;
-
-            const content = document.getElementById('detailContent');
-            content.innerHTML = workout.exercises.map(exercise => `
-                <div class="detail-exercise">
-                    <h3>${exercise.name}</h3>
-                    <div class="detail-col-headers">
-                        <span>Set</span>
-                        <span>Reps</span>
-                        <span>Weight (lbs)</span>
-                    </div>
-                    ${exercise.sets.map((set, i) => `
-                        <div class="detail-set-row">
-                            <span>Set ${i + 1}</span>
-                            <div class="reps-display">${set.weight || 0}</div>
-                            <input type="number" min="0" placeholder="Weight (lbs)" value="">
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('');
-
-            const panel = document.getElementById('detailPanel');
-            panel.style.display = 'block';
-            panel.dataset.activeId = workoutId;
-            document.querySelector('.main-layout').classList.add('has-detail');
+            window.location.href = `saved-workouts.html?id=${workoutId}`;
         }
 
         loadWorkouts();

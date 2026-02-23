@@ -203,6 +203,9 @@
                 workoutHistory = JSON.parse(saved);
             }
             displayWorkoutHistory();
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (id) viewWorkout(parseInt(id));
         }
 
         function displayWorkoutHistory() {
