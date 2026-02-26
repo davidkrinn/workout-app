@@ -220,6 +220,22 @@
             }
         }
 
+        function playDings() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [0, 0.35, 0.7].forEach(offset => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime + offset);
+                gain.gain.setValueAtTime(0.6, ctx.currentTime + offset);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.6);
+                osc.start(ctx.currentTime + offset);
+                osc.stop(ctx.currentTime + offset + 0.6);
+            });
+        }
+
         let _restTimer = null;
 
         function startRestTimer(btn) {
@@ -240,6 +256,7 @@
                     _restTimer = null;
                     timerEl.textContent = 'Go!';
                     timerEl.classList.add('done');
+                    playDings();
                 } else {
                     timerEl.textContent = count + 's';
                 }
