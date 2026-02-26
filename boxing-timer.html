@@ -321,6 +321,7 @@
 
         // ── Combo callout system ──────────────────────────────────────
         const DEFENSES = ['Slip left','Slip right','Roll','Block','Parry'];
+        let calloutTimeout = null;
 
         function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
@@ -376,10 +377,6 @@
             }
             speakComboThenDefense(combo.parts, defense, combo.noExtraDefense, () => {
                 if (phase !== 'round') return;
-                const delay = randInt(3000, 6000);
-                calloutTimeout = setTimeout(doCallout, delay);
-            });
-        }
                 const delay = randInt(3000, 6000);
                 calloutTimeout = setTimeout(doCallout, delay);
             });
