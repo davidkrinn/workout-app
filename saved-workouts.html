@@ -99,7 +99,7 @@
         }
         .active-set-headers {
             display: grid;
-            grid-template-columns: 60px 80px 1fr;
+            grid-template-columns: 60px 80px 1fr 36px 70px;
             gap: 10px;
             margin-bottom: 4px;
         }
@@ -111,7 +111,7 @@
         }
         .workout-set-row {
             display: grid;
-            grid-template-columns: 60px 80px 1fr;
+            grid-template-columns: 60px 80px 1fr 36px 70px;
             gap: 10px;
             align-items: center;
             margin-bottom: 8px;
@@ -136,52 +136,32 @@
             font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
         }
         .workout-set-row input:focus { border-color: #667eea; outline: none; }
-        .btn-save-session {
+        .btn-check {
             background: #28a745;
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            font-size: 16px;
             cursor: pointer;
-            margin-top: 14px;
-            width: 100%;
-            font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background 0.2s;
         }
-        .btn-save-session:hover { background: #218838; }
-        .session-log {
-            margin-top: 18px;
-            border-top: 2px solid #e0e0e0;
-            padding-top: 14px;
-        }
-        .session-log-title {
-            font-size: 13px;
+        .btn-check:hover { background: #218838; }
+        .rest-timer {
+            font-size: 15px;
             font-weight: 700;
-            color: #aaa;
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            color: #667eea;
+            text-align: center;
         }
-        .session-entry {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: #555;
-        }
-        .session-entry-date {
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-        .session-exercise { margin-bottom: 4px; }
+        .rest-timer.done { color: #28a745; }
         .no-workouts { text-align: center; color: #999; padding: 40px; }
         @media (max-width: 960px) {
             .saved-workouts-container { grid-column: span 12 !important; }
+            .workout-set-row, .active-set-headers { grid-template-columns: 50px 70px 1fr 36px 60px; }
         }
     </style>
 </head>
@@ -240,8 +220,34 @@
             }
         }
 
+        let _restTimer = null;
+
+        function startRestTimer(btn) {
+            const timerEl = btn.nextElementSibling;
+            if (_restTimer) {
+                clearInterval(_restTimer);
+                _restTimer = null;
+            }
+            // reset any other active timers
+            document.querySelectorAll('.rest-timer').forEach(el => { el.textContent = ''; el.classList.remove('done'); });
+            let count = 10;
+            timerEl.classList.remove('done');
+            timerEl.textContent = count + 's';
+            _restTimer = setInterval(() => {
+                count--;
+                if (count <= 0) {
+                    clearInterval(_restTimer);
+                    _restTimer = null;
+                    timerEl.textContent = 'Go!';
+                    timerEl.classList.add('done');
+                } else {
+                    timerEl.textContent = count + 's';
+                }
+            }, 1000);
+        }
+
         function renderActivePanel(workout) {
-            return workout.exercises.map((exercise, exIdx) => {
+            return workout.exercises.map(exercise => {
                 const numSets = Math.max(1, exercise.sets[0]?.reps ?? 1);
                 const numReps = exercise.sets[0]?.weight ?? 0;
                 let rows = '';
@@ -250,16 +256,18 @@
                         <div class="workout-set-row">
                             <span class="set-label">Set ${i}</span>
                             <span class="reps-label">${numReps} reps</span>
-                            <input type="number" min="0" placeholder="lbs" data-ex="${exIdx}" data-set="${i - 1}">
+                            <input type="number" min="0" placeholder="lbs">
+                            <button class="btn-check" onclick="startRestTimer(this)">&#10003;</button>
+                            <span class="rest-timer"></span>
                         </div>`;
                 }
                 return `
                     <div class="active-exercise">
                         <div class="active-exercise-name">${exercise.name}</div>
-                        <div class="active-set-headers"><span>Set</span><span>Reps</span><span>Weight (lbs)</span></div>
+                        <div class="active-set-headers"><span>Set</span><span>Reps</span><span>Weight (lbs)</span><span></span><span>Rest</span></div>
                         ${rows}
                     </div>`;
-            }).join('') + `<button class="btn-save-session" onclick="saveWorkoutSession(${workout.id})">Save Workout</button>`;
+            }).join('');
         }
 
         function displayWorkoutHistory() {
@@ -287,52 +295,11 @@
                     <div class="active-workout-panel" id="awp-${workout.id}">
                         ${renderActivePanel(workout)}
                     </div>
-                    ${renderSessionLogs(workout.id)}
                 </div>
             `).join('');
         }
 
-        function saveWorkoutSession(workoutId) {
-            const workout = workoutHistory.find(w => w.id === workoutId);
-            if (!workout) return;
-            const panel = document.getElementById(`awp-${workoutId}`);
-            const inputs = panel.querySelectorAll('input[data-ex]');
-            const exerciseMap = {};
-            inputs.forEach(input => {
-                const ex = input.dataset.ex;
-                if (!exerciseMap[ex]) exerciseMap[ex] = [];
-                exerciseMap[ex].push(parseFloat(input.value) || 0);
-            });
-            const sessionExercises = workout.exercises.map((exercise, idx) => ({
-                name: exercise.name,
-                repsPerSet: exercise.sets[0]?.weight ?? 0,
-                weights: exerciseMap[idx] || []
-            }));
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-            const session = { id: Date.now(), workoutId, date: dateStr, exercises: sessionExercises };
-            let logs = JSON.parse(localStorage.getItem('workoutLogs') || '[]');
-            logs.unshift(session);
-            localStorage.setItem('workoutLogs', JSON.stringify(logs));
-            // collapse panel and show confirmation
-            panel.style.display = 'none';
-            const startBtn = document.querySelector(`.workout-card[data-workout-id="${workoutId}"] .btn-start`);
-            if (startBtn) { startBtn.textContent = 'Start Workout'; startBtn.style.background = ''; }
-            displayWorkoutHistory();
-        }
-
-        function renderSessionLogs(workoutId) {
-            const logs = JSON.parse(localStorage.getItem('workoutLogs') || '[]').filter(l => l.workoutId === workoutId);
-            if (logs.length === 0) return '';
-            const entries = logs.map(log => `
-                <div class="session-entry">
-                    <div class="session-entry-date">${log.date}</div>
-                    ${log.exercises.map(ex => `
-                        <div class="session-exercise"><strong>${ex.name}</strong>: ${ex.weights.map((w, i) => `Set ${i+1} — ${w} lbs`).join(' &nbsp;·&nbsp; ')}</div>
-                    `).join('')}
-                </div>`).join('');
-            return `<div class="session-log"><div class="session-log-title">Past Sessions</div>${entries}</div>`;
-        }
+        function toggleStartWorkout(workoutId, btn) {
             const panel = document.getElementById(`awp-${workoutId}`);
             const isOpen = panel.style.display === 'block';
             panel.style.display = isOpen ? 'none' : 'block';
