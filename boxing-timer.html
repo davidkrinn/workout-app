@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boxing Timer - Many Rounds</title>
+    <link rel="icon" type="image/png" href="kettlebell.png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            padding-top: 0 !important;
+        }
+
+        /* ── Site nav override to stay on top ── */
+        .site-nav { z-index: 1000; }
+
+        /* ── Info bar ── */
+        .info-bar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(20, 20, 40, 0.92);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            z-index: 900;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .info-bar .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.2;
+        }
+        .info-bar .info-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+        }
+        .info-bar .info-value {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .info-bar .info-sep {
+            width: 1px;
+            height: 32px;
+            background: rgba(255,255,255,0.12);
+        }
+
+        /* ── Main timer area ── */
+        .timer-page {
+            min-height: 100vh;
+            padding-top: 124px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .timer-card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 56px 72px;
+            text-align: center;
+            min-width: 420px;
+            backdrop-filter: blur(8px);
+        }
+        .phase-label {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 10px;
+        }
+        .round-display {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .round-display .round-num {
+            color: #667eea;
+        }
+        .countdown {
+            font-size: 7rem;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+            margin: 20px 0;
+            letter-spacing: -2px;
+            transition: color 0.2s;
+        }
+        .countdown.warning { color: #ff6b6b; }
+        .status-msg {
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            min-height: 22px;
+            margin-top: 10px;
+        }
+        .done-msg {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #28a745;
+            margin: 20px 0;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 14px 36px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Futura', 'Century Gothic', 'Trebuchet MS', Arial, sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: #5568d3; }
+
+        @media (max-width: 640px) {
+            .timer-card { min-width: unset; padding: 36px 24px; }
+            .countdown { font-size: 5rem; }
+            .info-bar { gap: 20px; }
+            .info-bar .info-value { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="nav-brand" href="index.html">
+            <img src="kettlebell.png" alt="Many Rounds">
+            <span>Many Rounds</span>
+        </a>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav-drawer" id="navDrawer">
+        <a href="index.html">Home</a>
+        <a href="workout-builder.html">Build New Workout</a>
+        <a href="saved-workouts.html">Saved Workouts</a>
+        <a href="boxing.html">Boxing Timer</a>
+    </nav>
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const drawer = document.getElementById('navDrawer');
+        const overlay = document.getElementById('navOverlay');
+        function toggleNav() {
+            hamburger.classList.toggle('open');
+            drawer.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+        hamburger.addEventListener('click', toggleNav);
+        overlay.addEventListener('click', toggleNav);
+    </script>
+
+    <!-- Info bar -->
+    <div class="info-bar">
+        <div class="info-item">
+            <span class="info-label">Rounds</span>
+            <span class="info-value" id="infoRounds">—</span>
+        </div>
+        <div class="info-sep"></div>
+        <div class="info-item">
+            <span class="info-label">Round Time</span>
+            <span class="info-value" id="infoRoundTime">—</span>
+        </div>
+        <div class="info-sep"></div>
+        <div class="info-item">
+            <span class="info-label">Rest Time</span>
+            <span class="info-value" id="infoRestTime">—</span>
+        </div>
+    </div>
+
+    <div class="timer-page">
+        <div class="timer-card" id="timerCard">
+            <div class="phase-label" id="phaseLabel">Get Ready</div>
+            <div class="round-display" id="roundDisplay">Round <span class="round-num" id="roundNum">0</span></div>
+            <div class="countdown" id="countdown">10</div>
+            <div class="status-msg" id="statusMsg">Get ready to fight!</div>
+        </div>
+    </div>
+
+    <script>
+        // ── Parse URL params ──────────────────────────────────────────
+        const params     = new URLSearchParams(window.location.search);
+        const ROUNDS     = parseInt(params.get('rounds'))     || 3;
+        const ROUND_SEC  = parseInt(params.get('roundTotal')) || 180;
+        const REST_SEC   = parseInt(params.get('restTotal'))  || 60;
+
+        // ── Info bar ──────────────────────────────────────────────────
+        function fmt(s) {
+            const m = Math.floor(s / 60), sec = s % 60;
+            return m > 0 ? `${m}m ${sec > 0 ? sec + 's' : ''}`.trim() : `${sec}s`;
+        }
+        document.getElementById('infoRounds').textContent   = ROUNDS;
+        document.getElementById('infoRoundTime').textContent = fmt(ROUND_SEC);
+        document.getElementById('infoRestTime').textContent  = fmt(REST_SEC);
+
+        // ── Web Audio ─────────────────────────────────────────────────
+        let audioCtx = null;
+        function getCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+
+        function playBell(times = 1, onDone) {
+            const ctx = getCtx();
+            const bellDuration = 1.8;
+            const gap = 0.55;
+            for (let i = 0; i < times; i++) {
+                const t = ctx.currentTime + i * (bellDuration * 0.6 + gap);
+                // Bell = fundamental + harmonics
+                [[440, 0.6], [880, 0.3], [1320, 0.15], [1760, 0.07]].forEach(([freq, gain]) => {
+                    const osc = ctx.createOscillator();
+                    const g   = ctx.createGain();
+                    osc.connect(g); g.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    g.gain.setValueAtTime(gain, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + bellDuration);
+                    osc.start(t);
+                    osc.stop(t + bellDuration);
+                });
+                // add a short metallic click at the strike
+                const clickOsc = ctx.createOscillator();
+                const clickG   = ctx.createGain();
+                clickOsc.connect(clickG); clickG.connect(ctx.destination);
+                clickOsc.type = 'square';
+                clickOsc.frequency.setValueAtTime(2200, t);
+                clickG.gain.setValueAtTime(0.3, t);
+                clickG.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+                clickOsc.start(t);
+                clickOsc.stop(t + 0.04);
+            }
+            if (onDone) {
+                const delay = times * (bellDuration * 0.6 + gap) + 0.3;
+                setTimeout(onDone, delay * 1000);
+            }
+        }
+
+        function playTick() {
+            const ctx = getCtx();
+            const t = ctx.currentTime;
+            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+            const src = ctx.createBufferSource();
+            const filter = ctx.createBiquadFilter();
+            const g = ctx.createGain();
+            src.buffer = buf;
+            filter.type = 'highpass';
+            filter.frequency.value = 1800;
+            src.connect(filter); filter.connect(g); g.connect(ctx.destination);
+            g.gain.setValueAtTime(0.9, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            src.start(t);
+        }
+
+        // ── Timer state ───────────────────────────────────────────────
+        let phase        = 'warmup'; // warmup | round | rest | done
+        let currentRound = 0;
+        let timeLeft     = 10;
+        let interval     = null;
+
+        const elPhase    = document.getElementById('phaseLabel');
+        const elRoundNum = document.getElementById('roundNum');
+        const elCountdown = document.getElementById('countdown');
+        const elStatus   = document.getElementById('statusMsg');
+
+        function fmtTime(s) {
+            const m = Math.floor(s / 60), sec = s % 60;
+            return m > 0 ? `${m}:${String(sec).padStart(2,'0')}` : `${sec}`;
+        }
+
+        function updateDisplay() {
+            elCountdown.textContent = fmtTime(timeLeft);
+            elCountdown.classList.toggle('warning', timeLeft <= 5 && phase !== 'warmup');
+        }
+
+        function setPhaseWarmup() {
+            phase = 'warmup';
+            currentRound = 0;
+            timeLeft = 10;
+            elPhase.textContent = 'Get Ready';
+            elRoundNum.textContent = '0';
+            elStatus.textContent = 'Get ready to fight!';
+            updateDisplay();
+        }
+
+        function setPhaseRound(n) {
+            phase = 'round';
+            currentRound = n;
+            timeLeft = ROUND_SEC;
+            elPhase.textContent = 'Round';
+            elRoundNum.textContent = n;
+            elStatus.textContent = `Round ${n} of ${ROUNDS}`;
+            updateDisplay();
+        }
+
+        function setPhaseRest(afterRound) {
+            phase = 'rest';
+            timeLeft = REST_SEC;
+            elPhase.textContent = 'Rest';
+            elRoundNum.textContent = afterRound;
+            elStatus.textContent = `Rest — Round ${afterRound + 1} up next`;
+            updateDisplay();
+        }
+
+        function setPhaseDone() {
+            phase = 'done';
+            clearInterval(interval);
+            interval = null;
+            elPhase.textContent = 'Complete';
+            elRoundNum.textContent = ROUNDS;
+            elCountdown.textContent = '–';
+            elCountdown.classList.remove('warning');
+            elStatus.innerHTML = '';
+            document.getElementById('timerCard').innerHTML = `
+                <div class="done-msg">Workout Complete!</div>
+                <div class="status-msg">${ROUNDS} round${ROUNDS > 1 ? 's' : ''} finished.</div>
+                <a class="back-btn" href="boxing.html">← Back to Setup</a>
+            `;
+        }
+
+        function tick() {
+            // Tick sound for last 5 seconds (not warmup)
+            if (timeLeft <= 5 && timeLeft > 0 && phase !== 'warmup') {
+                playTick();
+            }
+
+            timeLeft--;
+            updateDisplay();
+
+            if (timeLeft > 0) return;
+
+            // Time's up for this phase
+            clearInterval(interval);
+            interval = null;
+
+            if (phase === 'warmup') {
+                // Single bell → start Round 1
+                playBell(1, () => {
+                    setPhaseRound(1);
+                    interval = setInterval(tick, 1000);
+                });
+
+            } else if (phase === 'round') {
+                // Single bell
+                playBell(1, () => {
+                    if (currentRound >= ROUNDS) {
+                        setPhaseDone();
+                    } else {
+                        setPhaseRest(currentRound);
+                        interval = setInterval(tick, 1000);
+                    }
+                });
+
+            } else if (phase === 'rest') {
+                // Double bell → start next round
+                playBell(2, () => {
+                    setPhaseRound(currentRound + 1);
+                    interval = setInterval(tick, 1000);
+                });
+            }
+        }
+
+        // ── Boot ──────────────────────────────────────────────────────
+        setPhaseWarmup();
+        updateDisplay();
+        // Small delay so AudioContext can be created on first user interaction
+        // The page navigation counts as interaction on most browsers,
+        // but we add a tiny defer just in case.
+        setTimeout(() => {
+            interval = setInterval(tick, 1000);
+        }, 500);
+    </script>
+</body>
+</html>

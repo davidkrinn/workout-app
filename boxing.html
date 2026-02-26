@@ -232,7 +232,8 @@
 
             if (roundTotal === 0) { alert('Please set a round duration greater than 0.'); return; }
 
-            alert(`Starting ${rounds} rounds of ${roundMins}m ${roundSecs}s with ${restMins}m ${restSecs}s rest.`);
+            const params = new URLSearchParams({ rounds, roundTotal, restTotal });
+            window.location.href = `boxing-timer.html?${params.toString()}`;
         }
     </script>
 </body>
