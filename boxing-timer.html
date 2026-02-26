@@ -106,6 +106,23 @@
             min-height: 22px;
             margin-top: 10px;
         }
+        .combo-display {
+            margin-top: 22px;
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 3px;
+            min-height: 36px;
+        }
+        .combo-display .defense-part {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffd166;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
         .done-msg {
             font-size: 2rem;
             font-weight: 800;
@@ -191,6 +208,7 @@
             <div class="round-display" id="roundDisplay">Round <span class="round-num" id="roundNum">0</span></div>
             <div class="countdown" id="countdown">10</div>
             <div class="status-msg" id="statusMsg">Get ready to fight!</div>
+            <div class="combo-display" id="comboDisplay"></div>
         </div>
     </div>
 
@@ -270,6 +288,73 @@
             src.start(t);
         }
 
+        // ── Combo callout system ──────────────────────────────────────
+        const DEFENSES = ['Slip left','Slip right','Roll','Block','Parry'];
+
+        let calloutTimeout = null;
+
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        function generateCombo() {
+            const len = randInt(2, 5);
+            const nums = [];
+            for (let i = 0; i < len; i++) nums.push(randInt(1, 6));
+            return nums;
+        }
+
+        function speakPhrase(text, rate, onEnd) {
+            if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+            const utt = new SpeechSynthesisUtterance(String(text));
+            utt.rate = rate;
+            utt.pitch = 1.05;
+            if (onEnd) utt.onend = onEnd;
+            window.speechSynthesis.speak(utt);
+        }
+
+        function speakComboThenDefense(combo, defense, onDone) {
+            if (!window.speechSynthesis) { if (onDone) onDone(); return; }
+            window.speechSynthesis.cancel();
+            combo.forEach((n, i) => {
+                const utt = new SpeechSynthesisUtterance(String(n));
+                utt.rate = 1.25;
+                utt.pitch = 1.1;
+                if (i === combo.length - 1) {
+                    utt.onend = () => {
+                        setTimeout(() => {
+                            if (phase !== 'round') { if (onDone) onDone(); return; }
+                            speakPhrase(defense, 0.9, onDone);
+                        }, 350);
+                    };
+                }
+                window.speechSynthesis.speak(utt);
+            });
+        }
+
+        function doCallout() {
+            if (phase !== 'round') return;
+            const combo = generateCombo();
+            const defense = DEFENSES[Math.floor(Math.random() * DEFENSES.length)];
+            const elCombo = document.getElementById('comboDisplay');
+            if (elCombo) elCombo.innerHTML = combo.join(' – ') + '<span class="defense-part">' + defense + '</span>';
+            speakComboThenDefense(combo, defense, () => {
+                if (phase !== 'round') return;
+                const delay = randInt(3000, 6000);
+                calloutTimeout = setTimeout(doCallout, delay);
+            });
+        }
+
+        function startCallouts() {
+            stopCallouts();
+            calloutTimeout = setTimeout(doCallout, randInt(2000, 3500));
+        }
+
+        function stopCallouts() {
+            if (calloutTimeout) { clearTimeout(calloutTimeout); calloutTimeout = null; }
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            const elCombo = document.getElementById('comboDisplay');
+            if (elCombo) elCombo.innerHTML = '';
+        }
+
         // ── Timer state ───────────────────────────────────────────────
         let phase        = 'warmup'; // warmup | round | rest | done
         let currentRound = 0;
@@ -309,6 +394,7 @@
             elRoundNum.textContent = n;
             elStatus.textContent = `Round ${n} of ${ROUNDS}`;
             updateDisplay();
+            startCallouts();
         }
 
         function setPhaseRest(afterRound) {
@@ -318,10 +404,12 @@
             elRoundNum.textContent = afterRound;
             elStatus.textContent = `Rest — Round ${afterRound + 1} up next`;
             updateDisplay();
+            stopCallouts();
         }
 
         function setPhaseDone() {
             phase = 'done';
+            stopCallouts();
             clearInterval(interval);
             interval = null;
             elPhase.textContent = 'Complete';
