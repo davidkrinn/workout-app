@@ -238,8 +238,21 @@
 
         let _restTimer = null;
 
+        function speakAnnouncement(exerciseName, setNum, reps) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const text = `${exerciseName}. Set ${setNum}. ${reps} reps.`;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
         function startRestTimer(btn) {
             const timerEl = btn.nextElementSibling;
+            const exerciseName = btn.dataset.exercise;
+            const setNum = btn.dataset.set;
+            const reps = btn.dataset.reps;
             if (_restTimer) {
                 clearInterval(_restTimer);
                 _restTimer = null;
@@ -257,6 +270,7 @@
                     timerEl.textContent = 'Go!';
                     timerEl.classList.add('done');
                     playDings();
+                    setTimeout(() => speakAnnouncement(exerciseName, setNum, reps), 1400);
                 } else {
                     timerEl.textContent = count + 's';
                 }
@@ -274,7 +288,7 @@
                             <span class="set-label">Set ${i}</span>
                             <span class="reps-label">${numReps} reps</span>
                             <input type="number" min="0" placeholder="lbs">
-                            <button class="btn-check" onclick="startRestTimer(this)">&#10003;</button>
+                            <button class="btn-check" data-exercise="${exercise.name}" data-set="${i}" data-reps="${numReps}" onclick="startRestTimer(this)">&#10003;</button>
                             <span class="rest-timer"></span>
                         </div>`;
                 }
