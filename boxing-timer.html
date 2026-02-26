@@ -200,7 +200,11 @@
             <span class="info-label">Rest Time</span>
             <span class="info-value" id="infoRestTime">—</span>
         </div>
-    </div>
+        <div class="info-sep"></div>
+        <div class="combo-checks">
+            <label class="combo-check-label"><input type="checkbox" id="chkBasic" checked> Basic combos</label>
+            <label class="combo-check-label"><input type="checkbox" id="chkAdvanced"> Advanced combos</label>
+        </div>
 
     <div class="timer-page">
         <div class="timer-card" id="timerCard">
@@ -291,56 +295,107 @@
         // ── Combo callout system ──────────────────────────────────────
         const DEFENSES = ['Slip left','Slip right','Roll','Block','Parry'];
 
+        // Basic combos: parts = what to speak, label = notation, name = full names, hasDefense = add random defense after
+        const BASIC_COMBOS = [
+            // Foundation & Basic
+            { parts:['1','2'],               label:'1 – 2',           name:'Jab – Cross',                                    hasDefense:true  },
+            { parts:['1','1','2'],            label:'1 – 1 – 2',       name:'Jab – Jab – Cross',                              hasDefense:true  },
+            { parts:['1','2','3'],            label:'1 – 2 – 3',       name:'Jab – Cross – Lead Hook',                        hasDefense:true  },
+            { parts:['1','2','1'],            label:'1 – 2 – 1',       name:'Jab – Cross – Jab',                              hasDefense:true  },
+            { parts:['1','2','5'],            label:'1 – 2 – 5',       name:'Jab – Cross – Lead Uppercut',                    hasDefense:true  },
+            { parts:['1','2','6'],            label:'1 – 2 – 6',       name:'Jab – Cross – Rear Uppercut',                    hasDefense:true  },
+            { parts:['1','2','3','2'],        label:'1 – 2 – 3 – 2',   name:'Jab – Cross – Lead Hook – Cross',                hasDefense:true  },
+            { parts:['1','4','3'],            label:'1 – 4 – 3',       name:'Jab – Rear Hook – Lead Hook',                    hasDefense:true  },
+            { parts:['1','5','2'],            label:'1 – 5 – 2',       name:'Jab – Lead Uppercut – Cross',                    hasDefense:true  },
+            { parts:['1','6','3'],            label:'1 – 6 – 3',       name:'Jab – Rear Uppercut – Lead Hook',                hasDefense:true  },
+            // Inside & Power
+            { parts:['2','3','2'],            label:'2 – 3 – 2',       name:'Cross – Lead Hook – Cross',                      hasDefense:true  },
+            { parts:['3','4','3'],            label:'3 – 4 – 3',       name:'Lead Hook – Rear Hook – Lead Hook',               hasDefense:true  },
+            { parts:['5','6','3'],            label:'5 – 6 – 3',       name:'Lead Uppercut – Rear Uppercut – Lead Hook',       hasDefense:true  },
+            { parts:['6','3','2'],            label:'6 – 3 – 2',       name:'Rear Uppercut – Lead Hook – Cross',               hasDefense:true  },
+            { parts:['1','2','3','2','1'],    label:'1 – 2 – 3 – 2 – 1', name:'Jab – Cross – Hook – Cross – Jab',             hasDefense:true  },
+            // Defensive & Counter (defense already built-in)
+            { parts:['Slip right','Left hook to body','Left Uppercut'],               label:'Slip – Body – Uppercut', name:'Slip right, Left hook to body, Left Uppercut',           hasDefense:false },
+            { parts:['Block','Cross','Lead Hook','Cross'],                             label:'Block – 2 – 3 – 2',     name:'Block, Cross, Lead Hook, Cross',                         hasDefense:false },
+            { parts:['Jab','Slip','Lead Uppercut','Cross','Lead Hook'],               label:'1 – Slip – 5 – 2 – 3',  name:'Jab, Slip, Lead Uppercut, Cross, Lead Hook',             hasDefense:false },
+            { parts:['Cross','Jab','Cross'],                                          label:'2 – 1 – 2',             name:'Cross, Jab, Cross',                                      hasDefense:false },
+            { parts:['Jab','Cross','Left Hook to body','Left Hook to head'],          label:'1 – 2 – Body – Head',   name:'Jab, Cross, Left Hook to body, Left Hook to head',       hasDefense:false },
+        ];
+
         let calloutTimeout = null;
 
         function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-        function generateCombo() {
-            const len = randInt(2, 5);
-            const nums = [];
-            for (let i = 0; i < len; i++) nums.push(randInt(1, 6));
-            return nums;
+        function isBasicActive()    { const el = document.getElementById('chkBasic');    return el && el.checked; }
+        function isAdvancedActive() { const el = document.getElementById('chkAdvanced'); return el && el.checked; }
+
+        function pickCombo() {
+            const basic    = isBasicActive();
+            const advanced = isAdvancedActive();
+            if (!basic && !advanced) return null;
+            // If both active, pick randomly between pools (weight equally)
+            const useAdvanced = advanced && (!basic || Math.random() < 0.5);
+            if (useAdvanced) {
+                const len  = randInt(2, 5);
+                const nums = Array.from({ length: len }, () => randInt(1, 6));
+                return { parts: nums.map(String), label: nums.join(' – '), name: null, hasDefense: true, isAdvanced: true };
+            } else {
+                const c = BASIC_COMBOS[Math.floor(Math.random() * BASIC_COMBOS.length)];
+                return { ...c, isAdvanced: false };
+            }
+        }
+
+        function speakParts(parts, onDone) {
+            if (!window.speechSynthesis) { if (onDone) onDone(); return; }
+            let i = 0;
+            function next() {
+                if (i >= parts.length || phase !== 'round') { if (onDone) onDone(); return; }
+                const part = parts[i++];
+                const utt  = new SpeechSynthesisUtterance(String(part));
+                utt.rate   = isNaN(Number(part)) ? 0.9 : 1.3;
+                utt.pitch  = 1.05;
+                utt.onend  = () => setTimeout(next, isNaN(Number(part)) ? 200 : 80);
+                window.speechSynthesis.speak(utt);
+            }
+            next();
         }
 
         function speakPhrase(text, rate, onEnd) {
             if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
             const utt = new SpeechSynthesisUtterance(String(text));
-            utt.rate = rate;
-            utt.pitch = 1.05;
+            utt.rate  = rate; utt.pitch = 1.05;
             if (onEnd) utt.onend = onEnd;
             window.speechSynthesis.speak(utt);
         }
 
-        function speakComboThenDefense(combo, defense, onDone) {
-            if (!window.speechSynthesis) { if (onDone) onDone(); return; }
-            window.speechSynthesis.cancel();
-            combo.forEach((n, i) => {
-                const utt = new SpeechSynthesisUtterance(String(n));
-                utt.rate = 1.25;
-                utt.pitch = 1.1;
-                if (i === combo.length - 1) {
-                    utt.onend = () => {
-                        setTimeout(() => {
-                            if (phase !== 'round') { if (onDone) onDone(); return; }
-                            speakPhrase(defense, 0.9, onDone);
-                        }, 350);
-                    };
+        function doCallout() {
+            if (phase !== 'round') return;
+            const combo = pickCombo();
+            if (!combo) return;
+            const defense = combo.hasDefense ? DEFENSES[Math.floor(Math.random() * DEFENSES.length)] : null;
+            const elCombo = document.getElementById('comboDisplay');
+            if (elCombo) {
+                const nameLine = combo.name ? `<span class="defense-part" style="color:rgba(255,255,255,0.55);font-size:0.85rem;letter-spacing:0.5px;text-transform:none;">${combo.name}</span>` : '';
+                const defLine  = defense ? `<span class="defense-part">${defense}</span>` : '';
+                elCombo.innerHTML = combo.label + nameLine + defLine;
+            }
+            window.speechSynthesis && window.speechSynthesis.cancel();
+            speakParts(combo.parts, () => {
+                if (phase !== 'round') return;
+                if (defense) {
+                    setTimeout(() => {
+                        if (phase !== 'round') return;
+                        speakPhrase(defense, 0.88, scheduleNext);
+                    }, 350);
+                } else {
+                    scheduleNext();
                 }
-                window.speechSynthesis.speak(utt);
             });
         }
 
-        function doCallout() {
+        function scheduleNext() {
             if (phase !== 'round') return;
-            const combo = generateCombo();
-            const defense = DEFENSES[Math.floor(Math.random() * DEFENSES.length)];
-            const elCombo = document.getElementById('comboDisplay');
-            if (elCombo) elCombo.innerHTML = combo.join(' – ') + '<span class="defense-part">' + defense + '</span>';
-            speakComboThenDefense(combo, defense, () => {
-                if (phase !== 'round') return;
-                const delay = randInt(3000, 6000);
-                calloutTimeout = setTimeout(doCallout, delay);
-            });
+            calloutTimeout = setTimeout(doCallout, randInt(3000, 6000));
         }
 
         function startCallouts() {
