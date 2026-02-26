@@ -97,6 +97,25 @@
             border-top: 2px solid #f0f0f0;
             margin: 28px 0;
         }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #444;
+        }
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
         @media (max-width: 960px) {
             .boxing-container { grid-column: span 12; }
         }
@@ -214,6 +233,23 @@
                     </div>
                 </div>
 
+                <hr class="divider">
+
+                <!-- Combo style -->
+                <div class="setting-group">
+                    <label>Combo Style</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="comboMode" value="basic" checked>
+                            Basic Combos
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="comboMode" value="advanced">
+                            Advanced Combos
+                        </label>
+                    </div>
+                </div>
+
                 <button class="start-btn" onclick="startTimer()">Start</button>
             </div>
         </div>
@@ -232,7 +268,8 @@
 
             if (roundTotal === 0) { alert('Please set a round duration greater than 0.'); return; }
 
-            const params = new URLSearchParams({ rounds, roundTotal, restTotal });
+            const comboMode = document.querySelector('input[name="comboMode"]:checked').value;
+            const params = new URLSearchParams({ rounds, roundTotal, restTotal, comboMode });
             window.location.href = `boxing-timer.html?${params.toString()}`;
         }
     </script>
