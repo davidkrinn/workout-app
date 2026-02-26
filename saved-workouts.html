@@ -250,9 +250,12 @@
 
         function startRestTimer(btn) {
             const timerEl = btn.nextElementSibling;
-            const exerciseName = btn.dataset.exercise;
-            const setNum = btn.dataset.set;
-            const reps = btn.dataset.reps;
+            const currentRow = btn.closest('.workout-set-row');
+            const nextRow = currentRow ? currentRow.nextElementSibling : null;
+            const nextBtn = nextRow && nextRow.classList.contains('workout-set-row') ? nextRow.querySelector('.btn-check') : null;
+            const exerciseName = nextBtn ? nextBtn.dataset.exercise : null;
+            const setNum = nextBtn ? nextBtn.dataset.set : null;
+            const reps = nextBtn ? nextBtn.dataset.reps : null;
             if (_restTimer) {
                 clearInterval(_restTimer);
                 _restTimer = null;
@@ -270,7 +273,7 @@
                     timerEl.textContent = 'Go!';
                     timerEl.classList.add('done');
                     playDings();
-                    setTimeout(() => speakAnnouncement(exerciseName, setNum, reps), 1400);
+                    if (nextBtn) setTimeout(() => speakAnnouncement(exerciseName, setNum, reps), 1400);
                 } else {
                     timerEl.textContent = count + 's';
                 }
