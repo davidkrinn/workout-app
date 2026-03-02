@@ -497,10 +497,13 @@
                 });
 
             } else if (phase === 'rest') {
-                // Double bell → start next round
+                // Double bell → announce round → start next round
                 playBell(2, () => {
-                    setPhaseRound(currentRound + 1);
-                    interval = setInterval(tick, 1000);
+                    const nextRound = currentRound + 1;
+                    speakPhrase(`Round ${nextRound}`, 0.85, () => {
+                        setPhaseRound(nextRound);
+                        interval = setInterval(tick, 1000);
+                    });
                 });
             }
         }
